@@ -1,0 +1,49 @@
+
+
+import { Pipe, PipeTransform } from '@angular/core';
+@Pipe({ name: 'draftParameters' })
+export class DraftParametersPipe implements PipeTransform {
+  transform(
+    groupData: { [group: string]: { [parameterName: string]: { [scope: string]: { value: string; status: string; createdAt: Date; valuesAllowed: string[] } } } },
+    group: string,
+    parameterName: string,
+    showDraftsOnly: boolean
+  ): boolean {
+    const groupEntry = groupData[group];
+    if (!groupEntry) {
+      return false;
+    }
+    const parameterEntry = groupEntry[parameterName];
+    if (!parameterEntry) {
+      return false;
+    }
+    let latestDraft: { value: string; status: string; createdAt: Date; valuesAllowed: string[] } | null = null;
+    let latestReleased: { value: string; status: string; createdAt: Date; valuesAllowed: string[] } | null = null;
+    for (const scopeKey in parameterEntry) {
+      const scope = parameterEntry[scopeKey];
+      if (scope && scope.status === 'Draft' && (!latestDraft || scope.createdAt > latestDraft.createdAt)) {
+        latestDraft = scope;
+      }
+      if (scope && scope.status === 'Released' && (!latestReleased || scope.createdAt > latestReleased.createdAt)) {
+        latestReleased = scope;
+      }
+    }
+
+    if (showDraftsOnly) {
+      if (latestDraft) {
+        console.log(`Draft: ${latestDraft.value} (created at ${latestDraft.createdAt})`);
+        return true;
+      } else if (latestReleased) {
+        console.log(`Released: ${latestReleased.value} (created at ${latestReleased.createdAt})`);
+        return true;
+      }
+    } else {
+      if (latestReleased) {
+        console.log(`Released: ${latestReleased.value} (created at ${latestReleased.createdAt})`);
+        return true;
+      }
+    }
+    return false;
+  }
+}
+ 
